@@ -169,3 +169,26 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  .print-summary-area {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .prose-medlens {
+    color: black !important;
+  }
+}
+

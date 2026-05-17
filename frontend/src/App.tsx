@@ -16,7 +16,6 @@ import { SummaryCard } from './components/results/SummaryCard';
 import { UrgencyCard } from './components/results/UrgencyCard';
 import { ReasonCard } from './components/results/ReasonCard';
 import { Disclaimer } from './components/results/Disclaimer';
-import { GlossaryCard } from './components/results/GlossaryCard';
 import { EmergencyCard } from './components/results/EmergencyCard';
 import { SummaryQRCard } from './components/results/SummaryQRCard';
 import { useAppStore } from './store/appStore';
@@ -255,51 +254,44 @@ export default function App() {
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <ResultsHeader result={analysisResult} onReset={reset} />
 
-              <div className="bento-grid lg:grid-cols-12 items-start">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-start print:block">
                 
-                {/* Column 1: Evidence & Glossary */}
-                <div className="grid gap-4 lg:col-span-4 xl:col-span-3">
+                {/* Column 1: Left */}
+                <div className="flex flex-col gap-4 lg:col-span-4 xl:col-span-3 print:hidden">
                   <EvidenceRail result={analysisResult} />
-                  <GlossaryCard summary={analysisResult.summary} />
+                  <Suspense fallback={<LazyPanelFallback />}>
+                    <TranslationPanel
+                      summary={analysisResult.summary}
+                      sessionId={analysisResult.session_id}
+                    />
+                  </Suspense>
                 </div>
                 
-                {/* Column 2: Summary & Chat */}
-                <div className="grid gap-4 lg:col-span-8 xl:col-span-6">
+                {/* Column 2: Center */}
+                <div className="flex flex-col gap-4 lg:col-span-8 xl:col-span-6 print:block">
                   <SummaryCard
                     summary={analysisResult.summary}
                     patientName={analysisResult.patient_name}
                   />
-                  <Suspense fallback={<LazyPanelFallback />}>
-                    <ChatPanel />
-                  </Suspense>
+                  <div className="print:hidden h-full">
+                    <Suspense fallback={<LazyPanelFallback />}>
+                      <ChatPanel />
+                    </Suspense>
+                  </div>
                 </div>
                 
-                {/* Column 3: Urgency, Reason & Emergency QR */}
-                <div className="grid gap-4 lg:col-span-12 xl:col-span-3">
+                {/* Column 3: Right */}
+                <div className="flex flex-col gap-4 lg:col-span-12 xl:col-span-3 print:hidden">
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
                     <UrgencyCard urgency={analysisResult.urgency} />
                     <ReasonCard reason={analysisResult.urgency.reason} />
                   </div>
                   <EmergencyCard sessionId={analysisResult.session_id} />
-                </div>
-
-                {/* Bottom Row: Translation & Summary QR */}
-                <div className="grid gap-4 lg:col-span-6">
-                  <Suspense fallback={<LazyPanelFallback />}>
-                    <TranslationPanel
-                      summary={analysisResult.summary}
-                      sessionId={analysisResult.session_id}
-                      className="h-full"
-                    />
-                  </Suspense>
-                </div>
-                
-                <div className="grid gap-4 lg:col-span-6">
                   <SummaryQRCard result={analysisResult} />
                 </div>
 
                 {/* Disclaimer */}
-                <div className="lg:col-span-12">
+                <div className="lg:col-span-12 print:hidden">
                   <Disclaimer />
                 </div>
               </div>

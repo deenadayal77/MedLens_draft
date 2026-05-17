@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { AlertTriangle, Copy, Loader2, Download } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
+import { AlertTriangle, Copy, Loader2, Download, Check } from 'lucide-react';
 import { generateEmergencyCard } from '../../api/client';
 import { formatEmergencyQRText } from '../../utils/formatters';
 import type { EmergencyCardResponse } from '../../types';
@@ -14,6 +14,7 @@ export function EmergencyCard({ sessionId }: EmergencyCardProps) {
   const [data, setData] = useState<EmergencyCardResponse | null>(null);
   const [qrText, setQrText] = useState('');
   const [copied, setCopied] = useState(false);
+  const qrRef = useRef<HTMLCanvasElement>(null);
 
   const handleGenerate = async () => {
     try {
@@ -34,6 +35,17 @@ export function EmergencyCard({ sessionId }: EmergencyCardProps) {
     navigator.clipboard.writeText(qrText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    if (!qrRef.current) return;
+    const url = qrRef.current.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `emergency_health_card_${data?.patient_name || 'qr'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -68,11 +80,12 @@ export function EmergencyCard({ sessionId }: EmergencyCardProps) {
         <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2">
           <div className="rounded-[20px] border border-rule bg-white p-4 w-full text-center">
             <div className="flex justify-center rounded-xl bg-white p-2">
-              <QRCodeSVG 
+              <QRCodeCanvas 
                 value={qrText} 
                 size={180}
                 level="M"
                 includeMargin={false}
+                ref={qrRef}
               />
             </div>
             
@@ -109,6 +122,13 @@ export function EmergencyCard({ sessionId }: EmergencyCardProps) {
                 {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 {copied ? 'Copied' : 'Copy Text'}
               </button>
+              <button
+                onClick={handleDownload}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rule bg-white py-2 text-sm font-semibold text-ink hover:bg-neutral"
+              >
+                <Download className="h-4 w-4" />
+                Save QR
+              </button>
             </div>
           </div>
         </div>
@@ -116,5 +136,3 @@ export function EmergencyCard({ sessionId }: EmergencyCardProps) {
     </div>
   );
 }
-
-import { Check } from 'lucide-react';

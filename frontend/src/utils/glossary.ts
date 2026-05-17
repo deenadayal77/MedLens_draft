@@ -103,3 +103,30 @@ export function extractGlossaryTerms(text: string): GlossaryTerm[] {
 
   return Array.from(foundTerms.values()) as any as GlossaryTerm[];
 }
+
+/**
+ * Replaces matching medical terms in a text with markdown links pointing to glossary:definition
+ * Example: "hydronephrosis" -> "[hydronephrosis](glossary:Swelling of the kidney caused by urine backup)"
+ */
+export function applyGlossaryMarkdown(text: string): string {
+  if (!text) return '';
+  let processedText = text;
+
+  // We sort by length descending so longer phrases match before their sub-words
+  const sortedTerms = Object.keys(MEDICAL_GLOSSARY).sort((a, b) => b.length - a.length);
+
+  for (const term of sortedTerms) {
+    const definition = MEDICAL_GLOSSARY[term];
+    // Regex to match whole words, ignoring case, NOT inside an existing markdown link or brackets
+    // Simple approach: avoid replacing if inside [] or ()
+    // This is a basic negative lookahead for `](` which usually follows a replaced word.
+    const regex = new RegExp(`\\b(${term.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')})\\b(?![^\\[]*\\])`, 'gi');
+    
+    processedText = processedText.replace(regex, (match) => {
+      // Encode the definition so it doesn't break the markdown URL parsing
+      return `[${match}](glossary:${encodeURIComponent(definition)})`;
+    });
+  }
+
+  return processedText;
+}

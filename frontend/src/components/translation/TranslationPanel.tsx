@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Languages, Volume2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Spinner } from '../ui/Spinner';
 import { GlassCard } from '../ui/GlassCard';
 import { translateText, fetchTTSBlob } from '../../api/client';
 import { useAppStore } from '../../store/appStore';
 import { LANGUAGE_MAP } from '../../types';
+import { applyGlossaryMarkdown } from '../../utils/glossary';
 
 interface TranslationPanelProps {
   summary: string;
@@ -53,6 +55,22 @@ export function TranslationPanel({ summary, sessionId, className }: TranslationP
     } finally {
       setPlayingTTS(false);
     }
+  };
+
+  const GlossaryLink = (props: any) => {
+    if (props.href && props.href.startsWith('glossary:')) {
+      const definition = decodeURIComponent(props.href.replace('glossary:', ''));
+      return (
+        <span className="group relative inline-block cursor-help border-b border-dashed border-accent font-medium text-accent">
+          {props.children}
+          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-normal rounded-xl bg-ink px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100 min-w-[200px] text-center pointer-events-none">
+            {definition}
+            <span className="absolute left-1/2 top-full -mt-1 -translate-x-1/2 border-4 border-transparent border-t-ink"></span>
+          </span>
+        </span>
+      );
+    }
+    return <a {...props} />;
   };
 
   return (
@@ -116,9 +134,11 @@ export function TranslationPanel({ summary, sessionId, className }: TranslationP
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[18px] border border-rule bg-neutral p-4 text-sm leading-relaxed text-muted"
+                    className="rounded-[18px] border border-rule bg-neutral p-4 text-sm leading-relaxed text-muted prose-medlens"
                   >
-                    {translatedSummary}
+                    <ReactMarkdown components={{ a: GlossaryLink }}>
+                      {applyGlossaryMarkdown(translatedSummary)}
+                    </ReactMarkdown>
                   </motion.div>
                 )}
               </AnimatePresence>
