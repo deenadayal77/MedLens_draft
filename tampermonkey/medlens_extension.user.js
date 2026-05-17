@@ -10,7 +10,7 @@
 // @match        file:///*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @connect      medlensfrontendbackendrepo-production.up.railway.app
+// @connect      medlensdraft-production.up.railway.app
 // @connect      *
 // @run-at       document-end
 // @require      https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js
@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  const BACKEND_URL = 'https://medlensfrontendbackendrepo-production.up.railway.app';
+  const BACKEND_URL = 'https://medlensdraft-production.up.railway.app';
 
   GM_addStyle(`
     #ml-fab {
@@ -1092,7 +1092,7 @@
   function isPDFPage() {
     const url = window.location.href.toLowerCase();
     return url.endsWith('.pdf') || url.includes('.pdf?') || url.includes('.pdf#') ||
-           (url.startsWith('file:') && url.includes('.pdf'));
+      (url.startsWith('file:') && url.includes('.pdf'));
   }
 
   function startAnalysis() {
@@ -1329,19 +1329,19 @@
     const btn = $('ml-paste-analyze');
 
     if (area) {
-      area.addEventListener('focus', function() {
+      area.addEventListener('focus', function () {
         this.style.borderColor = 'rgba(45,156,173,0.5)';
       });
-      area.addEventListener('blur', function() {
+      area.addEventListener('blur', function () {
         this.style.borderColor = 'rgba(45,156,173,0.25)';
       });
     }
 
     if (btn) {
-      btn.addEventListener('mouseover', function() {
+      btn.addEventListener('mouseover', function () {
         this.style.background = 'rgba(45,156,173,0.35)';
       });
-      btn.addEventListener('mouseout', function() {
+      btn.addEventListener('mouseout', function () {
         this.style.background = 'rgba(45,156,173,0.2)';
       });
       btn.onclick = () => {
