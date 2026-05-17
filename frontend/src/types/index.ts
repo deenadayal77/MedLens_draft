@@ -33,6 +33,16 @@ export interface TranslateResponse {
   translated_text: string;
 }
 
+export interface EmergencyCardResponse {
+  patient_name: string;
+  conditions: string[];
+  blood_type: string;
+  allergies: string;
+  medications: string;
+  emergency_notes: string;
+  urgency: string;
+}
+
 export type AppPhase = 'idle' | 'uploading' | 'analyzing' | 'results' | 'error';
 
 export interface UrgencyStyle {

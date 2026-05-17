@@ -17,6 +17,13 @@ export async function analyzeReport(file: File): Promise<AnalyzeResponse> {
   return data;
 }
 
+export async function generateEmergencyCard(sessionId: string): Promise<any> {
+  const { data } = await api.post('/emergency-card', {
+    session_id: sessionId,
+  });
+  return data;
+}
+
 export async function sendChat(sessionId: string, message: string): Promise<ChatResponse> {
   const { data } = await api.post<ChatResponse>('/chat', {
     session_id: sessionId,
