@@ -105,28 +105,37 @@ export function extractGlossaryTerms(text: string): GlossaryTerm[] {
 }
 
 /**
- * Replaces matching medical terms in a text with markdown links pointing to glossary:definition
- * Example: "hydronephrosis" -> "[hydronephrosis](glossary:Swelling of the kidney caused by urine backup)"
+ * Replaces matching medical terms in text with markdown glossary links.
+ * Uses a segment-based approach to skip already-linked terms.
+ * Example: "hydronephrosis" → "[hydronephrosis](glossary:Swelling...)"
  */
 export function applyGlossaryMarkdown(text: string): string {
   if (!text) return '';
-  let processedText = text;
 
-  // We sort by length descending so longer phrases match before their sub-words
+  // Sort longest first so multi-word terms match before their sub-words
   const sortedTerms = Object.keys(MEDICAL_GLOSSARY).sort((a, b) => b.length - a.length);
 
-  for (const term of sortedTerms) {
-    const definition = MEDICAL_GLOSSARY[term];
-    // Regex to match whole words, ignoring case, NOT inside an existing markdown link or brackets
-    // Simple approach: avoid replacing if inside [] or ()
-    // This is a basic negative lookahead for `](` which usually follows a replaced word.
-    const regex = new RegExp(`\\b(${term.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')})\\b(?![^\\[]*\\])`, 'gi');
-    
-    processedText = processedText.replace(regex, (match) => {
-      // Encode the definition so it doesn't break the markdown URL parsing
-      return `[${match}](glossary:${encodeURIComponent(definition)})`;
-    });
-  }
+  // Split by existing markdown links (capturing group keeps them in the array)
+  // Odd-indexed parts are already-linked text → skip them
+  const linkPattern = /(\[[^\]]+\]\([^)]+\))/g;
+  const parts = text.split(linkPattern);
 
-  return processedText;
+  const processedParts = parts.map((part, index) => {
+    // Skip already-linked segments (odd indices from capturing split)
+    if (index % 2 === 1) return part;
+
+    let processed = part;
+    for (const term of sortedTerms) {
+      const definition = MEDICAL_GLOSSARY[term];
+      // Correct special char escaping for use in RegExp constructor
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+      processed = processed.replace(regex, (match) =>
+        `[${match}](glossary:${encodeURIComponent(definition)})`
+      );
+    }
+    return processed;
+  });
+
+  return processedParts.join('');
 }

@@ -58,14 +58,17 @@ export function TranslationPanel({ summary, sessionId, className }: TranslationP
   };
 
   const GlossaryLink = (props: any) => {
-    if (props.href && props.href.startsWith('glossary:')) {
+    if (props.href?.startsWith('glossary:')) {
       const definition = decodeURIComponent(props.href.replace('glossary:', ''));
       return (
-        <span className="group relative inline-block cursor-help border-b border-dashed border-accent font-medium text-accent">
+        <span
+          className="group relative inline-block cursor-help"
+          style={{ color: '#0891b2', textDecoration: 'underline', textDecorationColor: '#0891b2' }}
+        >
           {props.children}
-          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-normal rounded-xl bg-ink px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100 min-w-[200px] text-center pointer-events-none">
+          <span className="invisible absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 w-max max-w-[230px] rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100 pointer-events-none whitespace-normal text-center">
             {definition}
-            <span className="absolute left-1/2 top-full -mt-1 -translate-x-1/2 border-4 border-transparent border-t-ink"></span>
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900 mb-[-1px]" />
           </span>
         </span>
       );
