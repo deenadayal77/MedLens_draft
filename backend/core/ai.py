@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import re
+import os
 from functools import lru_cache
 
+from google import genai
+from google.genai import types
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
 from langchain_classic.prompts import PromptTemplate
@@ -16,6 +19,7 @@ from backend.core.config import (
     DEFAULT_GEMINI_CHAT_MODEL,
     DEFAULT_GEMINI_EMBEDDING_MODEL,
     DEFAULT_GEMINI_MODEL,
+    DEFAULT_GEMINI_OCR_MODEL,
     QUESTION_REWRITE_PROMPT,
     SAFETY_OVERRIDE_KEYWORDS,
     SUMMARY_PROMPT,
@@ -51,7 +55,19 @@ def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     )
 
 
+@lru_cache(maxsize=1)
+def get_genai_client() -> genai.Client:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        return genai.Client(api_key=api_key)
+    return genai.Client()
+
+
 def _extract_text(response) -> str:
+    text = getattr(response, "text", None)
+    if text:
+        return str(text).strip()
+
     content = getattr(response, "content", response)
     if isinstance(content, list):
         parts = []
@@ -66,6 +82,37 @@ def _extract_text(response) -> str:
                     parts.append(str(text))
         return "\n".join(part for part in parts if part).strip()
     return str(content).strip()
+
+
+def extract_text_from_report_images(page_images: list[bytes]) -> str:
+    if not page_images:
+        return ""
+
+    prompt = (
+        "You are an OCR engine for medical reports. Extract all readable text from "
+        "these PDF page images in page order.\n\n"
+        "Rules:\n"
+        "- Return only the extracted report text.\n"
+        "- Preserve important labels, section headings, dates, values, units, and line breaks.\n"
+        "- Do not summarize, explain, diagnose, or add information that is not visible.\n"
+        "- If a word is unclear, write [unclear] rather than guessing.\n"
+        "- Do not wrap the result in markdown or code fences."
+    )
+    contents = [prompt]
+    contents.extend(
+        types.Part.from_bytes(data=image, mime_type="image/png")
+        for image in page_images
+    )
+
+    response = get_genai_client().models.generate_content(
+        model=DEFAULT_GEMINI_OCR_MODEL,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            temperature=0,
+            max_output_tokens=6000,
+        ),
+    )
+    return _extract_text(response)
 
 
 def build_vectorstore(report_text: str, report_hash: str) -> Chroma:

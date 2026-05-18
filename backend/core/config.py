@@ -16,6 +16,12 @@ DEFAULT_GEMINI_EMBEDDING_MODEL = os.getenv(
     "MEDLENS_GEMINI_EMBEDDING_MODEL",
     "models/gemini-embedding-001",
 )
+DEFAULT_GEMINI_OCR_MODEL = os.getenv(
+    "MEDLENS_GEMINI_OCR_MODEL",
+    DEFAULT_GEMINI_MODEL,
+)
+OCR_MIN_TEXT_CHARS = int(os.getenv("MEDLENS_OCR_MIN_TEXT_CHARS", "120"))
+OCR_MAX_PAGES = int(os.getenv("MEDLENS_OCR_MAX_PAGES", "6"))
 
 DISCLAIMER_TEXT = (
     "This is an AI-generated analysis and not a medical diagnosis. "

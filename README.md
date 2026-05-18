@@ -7,6 +7,7 @@ MedLens is an AI-powered medical report assistant that helps users understand ra
 ## Features
 
 - Upload PDF medical reports and extract text with PyMuPDF
+- Automatically fall back to Gemini Vision OCR for scanned or image-only PDFs
 - Generate patient-friendly summaries using Gemini
 - Classify urgency with confidence and rule-based overrides
 - Ask report-grounded follow-up questions through chat
@@ -54,6 +55,8 @@ The FastAPI backend exposes these main endpoints:
 | `POST` | `/api/verify` | Verify whether a report hash was analyzed |
 | `POST` | `/api/emergency-card` | Generate structured emergency health-card data |
 
+For scanned or image-only PDFs, `/api/analyze` first attempts normal PDF text extraction. If the extracted text is too short, the backend renders the first few pages as images and uses Gemini Vision OCR before continuing through the same summary, urgency, and chat pipeline.
+
 ## Environment Variables
 
 Create a backend environment file:
@@ -70,6 +73,9 @@ GEMINI_API_KEY=your_gemini_api_key_here
 MEDLENS_GEMINI_MODEL=gemini-2.5-flash
 MEDLENS_GEMINI_CHAT_MODEL=gemini-2.5-flash
 MEDLENS_GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001
+MEDLENS_GEMINI_OCR_MODEL=gemini-2.5-flash
+MEDLENS_OCR_MIN_TEXT_CHARS=120
+MEDLENS_OCR_MAX_PAGES=6
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
@@ -164,6 +170,9 @@ GEMINI_API_KEY=your_gemini_api_key_here
 MEDLENS_GEMINI_MODEL=gemini-2.5-flash
 MEDLENS_GEMINI_CHAT_MODEL=gemini-2.5-flash
 MEDLENS_GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001
+MEDLENS_GEMINI_OCR_MODEL=gemini-2.5-flash
+MEDLENS_OCR_MIN_TEXT_CHARS=120
+MEDLENS_OCR_MAX_PAGES=6
 CORS_ORIGINS=https://your-vercel-app.vercel.app
 ```
 

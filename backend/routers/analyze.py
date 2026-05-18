@@ -3,13 +3,17 @@ from __future__ import annotations
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from backend.core.ai import classify_urgency, generate_summary_from_context
+from backend.core.ai import (
+    classify_urgency,
+    extract_text_from_report_images,
+    generate_summary_from_context,
+)
 from backend.core.errors import ai_service_exception
 from backend.core.models import AnalyzeResponse, UrgencyResponse
 from backend.core.report_processing import (
     derive_primary_context,
     extract_patient_name,
-    extract_text_from_pdf,
+    extract_text_from_pdf_with_ocr_fallback,
     normalize_report_text,
     report_hash_from_bytes,
 )
@@ -76,7 +80,10 @@ async def analyze_report(file: UploadFile = File(...)):
 
     try:
         report_hash = report_hash_from_bytes(pdf_bytes)
-        report_text = extract_text_from_pdf(pdf_bytes)
+        report_text = extract_text_from_pdf_with_ocr_fallback(
+            pdf_bytes,
+            extract_text_from_report_images,
+        )
         patient_name = extract_patient_name(report_text)
         primary_context = derive_primary_context(report_text)
         summary = generate_summary_from_context(primary_context)
