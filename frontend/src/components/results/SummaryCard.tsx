@@ -17,20 +17,19 @@ export function SummaryCard({ summary, patientName, urgency, className }: Summar
   const hasPatient = patientName && patientName !== 'Not available';
   const processedSummary = useMemo(() => applyGlossaryMarkdown(summary), [summary]);
   const urgencyStyle = urgency ? URGENCY_STYLES[urgency.level] : null;
+  const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const GlossaryLink = (props: any) => {
-    if (props.href && props.href.startsWith('glossary:')) {
+    if (props.href?.startsWith('glossary:')) {
       const definition = decodeURIComponent(props.href.replace('glossary:', ''));
       return (
         <span className="group relative inline-block cursor-help border-b border-dashed border-accent font-medium text-accent">
           {props.children}
-          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-normal rounded-xl bg-ink px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100 min-w-[200px] text-center pointer-events-none">
+          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-xl bg-ink px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100 min-w-[200px] max-w-[260px] text-center pointer-events-none whitespace-normal">
             {definition}
-            <span className="absolute left-1/2 top-full -mt-1 -translate-x-1/2 border-4 border-transparent border-t-ink"></span>
+            <span className="absolute left-1/2 top-full -mt-1 -translate-x-1/2 border-4 border-transparent border-t-ink" />
           </span>
         </span>
       );
@@ -41,37 +40,62 @@ export function SummaryCard({ summary, patientName, urgency, className }: Summar
   return (
     <GlassCard delay={0.1} className={`${className || ''} print-summary-area`}>
 
-      {/* ── Print-only header: Patient info + Urgency ── */}
-      <div className="hidden print:block mb-6 border-b border-gray-200 pb-6">
-        <div className="flex items-start justify-between">
+      {/* ── PRINT-ONLY DOCUMENT HEADER ── */}
+      <div className="hidden print:block print-doc-header">
+        <div className="print-header-bar">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">MedLens AI — Medical Report Summary</p>
-            <h1 className="mt-1 text-2xl font-bold text-black">
-              {hasPatient ? patientName : 'Patient Name Unavailable'}
-            </h1>
+            <div className="print-brand">🩺 MedLens — AI Medical Report Summary</div>
+            <div className="print-report-type">Structured Clinical Analysis</div>
           </div>
-          {urgencyStyle && (
-            <div className="text-right">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Urgency Level</p>
-              <p className="mt-1 text-xl font-bold" style={{ color: urgencyStyle.color }}>
-                {urgency?.level.replace('_', ' ')}
-              </p>
-              <p className="text-xs text-gray-500">{urgencyStyle.label}</p>
-            </div>
-          )}
+          <div className="print-date-block">{today}</div>
         </div>
+
+        <div className="print-patient-grid">
+          <div className="print-patient-field">
+            <span className="print-field-label">Patient Name</span>
+            <span className="print-field-value">{hasPatient ? patientName : 'Not available in report'}</span>
+          </div>
+          <div className="print-patient-field">
+            <span className="print-field-label">Date Generated</span>
+            <span className="print-field-value">{today}</span>
+          </div>
+          <div className="print-patient-field">
+            <span className="print-field-label">Urgency Level</span>
+            <span className="print-field-value print-urgency" style={{ color: urgencyStyle?.color }}>
+              {urgency?.level.replace('_', ' ') ?? 'N/A'}
+            </span>
+          </div>
+          <div className="print-patient-field">
+            <span className="print-field-label">AI Confidence</span>
+            <span className="print-field-value">
+              {urgency?.confidence != null ? `${Math.round(urgency.confidence * 100)}%` : 'N/A'}
+            </span>
+          </div>
+          <div className="print-patient-field">
+            <span className="print-field-label">Blood Group</span>
+            <span className="print-field-value">See Emergency Health Card</span>
+          </div>
+          <div className="print-patient-field">
+            <span className="print-field-label">Report Type</span>
+            <span className="print-field-value">AI-Analysed Medical Report</span>
+          </div>
+        </div>
+
         {urgency && (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Urgency Reasoning</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{urgency.reason}</p>
+          <div className="print-reasoning-box">
+            <div className="print-field-label">Urgency Assessment</div>
+            <div className="print-reasoning-text">{urgency.reason}</div>
           </div>
         )}
-        <p className="mt-4 text-[10px] text-gray-400 italic">
-          This document was generated by MedLens AI on {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}. It is NOT a medical diagnosis. Consult a qualified doctor.
-        </p>
+
+        <div className="print-disclaimer-bar">
+          ⚠ AI-generated analysis. This is NOT a medical diagnosis. Always consult a qualified doctor.
+        </div>
+
+        <div className="print-section-title">Structured Clinical Summary</div>
       </div>
 
-      {/* ── Screen header ── */}
+      {/* ── SCREEN HEADER ── */}
       <div className="mb-5 flex flex-col justify-between gap-3 border-b border-rule pb-5 sm:flex-row sm:items-start print:hidden">
         <div>
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-[18px] border border-rule bg-white text-accent">
@@ -95,7 +119,7 @@ export function SummaryCard({ summary, patientName, urgency, className }: Summar
         </div>
       </div>
 
-      {/* ── Summary body ── */}
+      {/* ── SUMMARY BODY ── */}
       <div className="prose-medlens">
         <ReactMarkdown components={{ a: GlossaryLink }}>
           {processedSummary}

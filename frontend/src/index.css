@@ -101,6 +101,110 @@ button {
   border-color: var(--rule);
 }
 
+/* Premium card hover lift */
+.grid-panel {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.grid-panel:hover {
+  box-shadow: 0 28px 70px rgba(17, 24, 39, 0.13);
+  transform: translateY(-2px);
+}
+.glass {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.glass:hover {
+  box-shadow: 0 28px 70px rgba(17, 24, 39, 0.13);
+  transform: translateY(-2px);
+}
+
+/* ── Print document styles ── */
+.print-doc-header { padding-bottom: 0; }
+
+.print-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #002fa7;
+}
+.print-brand {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #002fa7;
+}
+.print-report-type {
+  font-size: 9pt;
+  color: #666;
+  margin-top: 2px;
+}
+.print-date-block {
+  font-size: 9pt;
+  color: #666;
+  text-align: right;
+}
+.print-patient-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.print-patient-field {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: #f8f9fb;
+  border: 1px solid #dde1ea;
+  border-radius: 6px;
+}
+.print-field-label {
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  margin-bottom: 3px;
+}
+.print-field-value {
+  font-size: 10pt;
+  font-weight: 600;
+  color: #111;
+}
+.print-urgency {
+  font-weight: 800;
+}
+.print-reasoning-box {
+  background: #fff8f0;
+  border: 1px solid #e5c07b;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.print-reasoning-text {
+  font-size: 10pt;
+  color: #444;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.print-disclaimer-bar {
+  background: #fff3cd;
+  border: 1px solid #f5c842;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 8.5pt;
+  color: #5a4500;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.print-section-title {
+  font-size: 14pt;
+  font-weight: 700;
+  color: #111;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dde1ea;
+  margin-bottom: 14px;
+}
+
 .touch-target {
   min-height: 44px;
   min-width: 44px;

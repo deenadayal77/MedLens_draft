@@ -228,29 +228,49 @@ export default function App() {
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
               {/* ── ROW 0: Patient Banner (full width) ─────────────────── */}
-              <PatientBanner result={analysisResult} onReset={reset} />
+              <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} className="print:hidden">
+                <PatientBanner result={analysisResult} onReset={reset} />
+              </motion.div>
 
               {/* ── ROW 1: Summary (65%) + Sidebar (35%) ───────────────── */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
 
                 {/* Left: Summary Hero */}
-                <SummaryCard
-                  summary={analysisResult.summary}
-                  patientName={analysisResult.patient_name}
-                  urgency={analysisResult.urgency}
-                />
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}>
+                  <SummaryCard
+                    summary={analysisResult.summary}
+                    patientName={analysisResult.patient_name}
+                    urgency={analysisResult.urgency}
+                  />
+                </motion.div>
 
-                {/* Right: Compact sidebar cards */}
+                {/* Right: Compact sidebar cards with stagger */}
                 <div className="flex flex-col gap-4 print:hidden">
-                  <UrgencyCard urgency={analysisResult.urgency} />
-                  <ReasonCard reason={analysisResult.urgency.reason} />
-                  <EmergencyCard sessionId={analysisResult.session_id} />
-                  <SummaryQRCard result={analysisResult} />
+                  {[
+                    <UrgencyCard key="urgency" urgency={analysisResult.urgency} />,
+                    <ReasonCard key="reason" reason={analysisResult.urgency.reason} />,
+                    <EmergencyCard key="emergency" sessionId={analysisResult.session_id} />,
+                    <SummaryQRCard key="qr" result={analysisResult} />,
+                  ].map((card, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.45, delay: 0.15 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      {card}
+                    </motion.div>
+                  ))}
                 </div>
               </div>
 
               {/* ── ROW 2: Translation (50%) + Chat (50%) ──────────────── */}
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:hidden">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:hidden"
+              >
                 <Suspense fallback={<LazyPanelFallback />}>
                   <TranslationPanel
                     summary={analysisResult.summary}
@@ -260,7 +280,7 @@ export default function App() {
                 <Suspense fallback={<LazyPanelFallback />}>
                   <ChatPanel />
                 </Suspense>
-              </div>
+              </motion.div>
 
               {/* ── ROW 3: Evidence Map (full width) ───────────────────── */}
               <div className="print:hidden">
