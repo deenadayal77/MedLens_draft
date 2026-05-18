@@ -63,12 +63,12 @@ export function TranslationPanel({ summary, sessionId, className }: TranslationP
       return (
         <span
           className="group relative inline-block cursor-help"
-          style={{ color: '#0891b2', textDecoration: 'underline', textDecorationColor: '#0891b2' }}
+          style={{ color: '#0891b2', textDecoration: 'none' }}
         >
           {props.children}
-          <span className="invisible absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 w-max max-w-[230px] rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100 pointer-events-none whitespace-normal text-center">
+          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 w-max max-w-[230px] rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100 pointer-events-none whitespace-normal text-center">
             {definition}
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900 mb-[-1px]" />
+            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
           </span>
         </span>
       );
