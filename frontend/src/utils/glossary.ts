@@ -31,6 +31,23 @@ export const MEDICAL_GLOSSARY: Record<string, string> = {
   'osteoporosis': 'Condition where bones become weak and brittle',
   'arthritis': 'Inflammation of joints causing pain and stiffness',
   'biopsy': 'Test where a tissue sample is removed for examination',
+  'hemoglobin': 'A protein in red blood cells that carries oxygen around the body',
+  'hematocrit': 'The percentage of blood made up of red blood cells',
+  'lymphocytes': 'White blood cells that help the body fight infections',
+  'neutrophils': 'White blood cells that help fight bacterial infections',
+  'platelets': 'Blood cells that help with clotting and stopping bleeding',
+  'wbc': 'White blood cell count, which can rise or fall with infection, inflammation, or other conditions',
+  'rbc': 'Red blood cell count, which shows how many oxygen-carrying red cells are in the blood',
+  'mcv': 'Average size of red blood cells',
+  'mch': 'Average amount of hemoglobin in each red blood cell',
+  'mchc': 'Average concentration of hemoglobin inside red blood cells',
+  'rdw': 'A measure of how much red blood cell sizes vary',
+  'eosinophils': 'White blood cells often linked with allergies, asthma, or certain infections',
+  'monocytes': 'White blood cells that help clean up germs and damaged cells',
+  'basophils': 'White blood cells involved in allergic and inflammatory reactions',
+  'creatinine': 'A waste product measured to help assess kidney function',
+  'urea': 'A waste product in blood that can reflect kidney function and hydration',
+  'bilirubin': 'A yellow pigment measured to assess liver or bile-related problems',
   'bilateral': 'Affecting both sides of the body',
   'anterior': 'Located at the front of the body',
   'posterior': 'Located at the back of the body',
@@ -73,6 +90,15 @@ export interface GlossaryTerm {
   definition: string;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+type GlossarySegment = {
+  text: string;
+  linked: boolean;
+};
+
 /**
  * Scans a given text and extracts matching terms from the MEDICAL_GLOSSARY.
  * Returns unique matching terms with their definitions.
@@ -85,7 +111,7 @@ export function extractGlossaryTerms(text: string): GlossaryTerm[] {
 
   for (const [term, definition] of Object.entries(MEDICAL_GLOSSARY)) {
     // Only match whole words
-    const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'gi');
+    const regex = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'gi');
     if (regex.test(lowerText)) {
       // Find the actual cased word in the text if possible, otherwise use the glossary key
       const match = text.match(regex);
@@ -118,24 +144,52 @@ export function applyGlossaryMarkdown(text: string): string {
   // Split by existing markdown links (capturing group keeps them in the array)
   // Odd-indexed parts are already-linked text → skip them
   const linkPattern = /(\[[^\]]+\]\([^)]+\))/g;
-  const parts = text.split(linkPattern);
+  let segments: GlossarySegment[] = text
+    .split(linkPattern)
+    .filter(Boolean)
+    .map((part) => ({
+      text: part,
+      linked: /^\[[^\]]+\]\([^)]+\)$/.test(part),
+    }));
 
-  const processedParts = parts.map((part, index) => {
-    // Skip already-linked segments (odd indices from capturing split)
-    if (index % 2 === 1) return part;
+  for (const term of sortedTerms) {
+    const definition = MEDICAL_GLOSSARY[term];
+    const regex = new RegExp(`\\b(${escapeRegExp(term)})\\b`, 'gi');
 
-    let processed = part;
-    for (const term of sortedTerms) {
-      const definition = MEDICAL_GLOSSARY[term];
-      // Correct special char escaping for use in RegExp constructor
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
-      processed = processed.replace(regex, (match) =>
-        `[${match}](glossary:${encodeURIComponent(definition)})`
-      );
-    }
-    return processed;
-  });
+    segments = segments.flatMap((segment) => {
+      if (segment.linked) return [segment];
 
-  return processedParts.join('');
+      const pieces: GlossarySegment[] = [];
+      let lastIndex = 0;
+
+      for (const match of segment.text.matchAll(regex)) {
+        const matchedText = match[0];
+        const index = match.index ?? 0;
+
+        if (index > lastIndex) {
+          pieces.push({
+            text: segment.text.slice(lastIndex, index),
+            linked: false,
+          });
+        }
+
+        pieces.push({
+          text: `[${matchedText}](glossary:${encodeURIComponent(definition)})`,
+          linked: true,
+        });
+        lastIndex = index + matchedText.length;
+      }
+
+      if (lastIndex < segment.text.length) {
+        pieces.push({
+          text: segment.text.slice(lastIndex),
+          linked: false,
+        });
+      }
+
+      return pieces.length ? pieces : [segment];
+    });
+  }
+
+  return segments.map((segment) => segment.text).join('');
 }
