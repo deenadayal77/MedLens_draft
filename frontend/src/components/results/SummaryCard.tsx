@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { FileText, Printer } from 'lucide-react';
 import { GlassCard } from '../ui/GlassCard';
+import { GlossaryTooltip } from '../ui/GlossaryTooltip';
 import { applyGlossaryMarkdown } from '../../utils/glossary';
 import { URGENCY_STYLES } from '../../types';
 import type { UrgencyData } from '../../types';
@@ -21,21 +22,19 @@ export function SummaryCard({ summary, patientName, urgency, className }: Summar
 
   const handlePrint = () => window.print();
 
+  // Intercepts glossary: links produced by applyGlossaryMarkdown and renders
+  // them as interactive GlossaryTooltip spans instead of plain <a> tags.
   const GlossaryLink = (props: any) => {
     if (props.href?.startsWith('glossary:')) {
       const definition = decodeURIComponent(props.href.replace('glossary:', ''));
-      return (
-        <span
-          className="group relative inline-block cursor-help"
-          style={{ color: '#0891b2', textDecoration: 'none' }}
-        >
-          {props.children}
-          <span className="invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 w-max max-w-[230px] rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100 pointer-events-none whitespace-normal text-center">
-            {definition}
-            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-          </span>
-        </span>
-      );
+      // props.children is a React node; extract the raw string for the term label
+      const termText =
+        typeof props.children === 'string'
+          ? props.children
+          : Array.isArray(props.children)
+          ? props.children.join('')
+          : String(props.children ?? '');
+      return <GlossaryTooltip term={termText} definition={definition} />;
     }
     return <a {...props} />;
   };
