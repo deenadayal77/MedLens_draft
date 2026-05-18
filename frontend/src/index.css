@@ -171,24 +171,76 @@ button {
 }
 
 @media print {
+  /* Reset everything for clean print */
+  * { box-shadow: none !important; }
+
   body {
-    background: white;
-    color: black;
+    background: white !important;
+    color: #111 !important;
+    font-family: Georgia, 'Times New Roman', serif;
   }
-  .print\:hidden {
+
+  /* Hide all UI chrome */
+  nav,
+  header,
+  .print\:hidden,
+  [class*="print:hidden"] {
     display: none !important;
   }
-  .print\:block {
+
+  /* Show print-only elements */
+  .hidden.print\:block,
+  [class*="print:block"] {
     display: block !important;
   }
+
+  /* Make the summary card look like a clean document */
   .print-summary-area {
     box-shadow: none !important;
-    border: none !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0 !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 20px !important;
+    page-break-inside: avoid;
   }
+
+  /* Patient banner for print */
+  .print-patient-banner {
+    display: block;
+    border: none !important;
+    box-shadow: none !important;
+    margin-bottom: 8px;
+  }
+
+  /* Summary text */
   .prose-medlens {
-    color: black !important;
+    color: #111 !important;
+    font-size: 11pt;
+    line-height: 1.7;
+  }
+
+  .prose-medlens h1,
+  .prose-medlens h2,
+  .prose-medlens h3 {
+    color: #000 !important;
+    page-break-after: avoid;
+  }
+
+  /* Remove tooltips in print */
+  .group span[class*="invisible"] {
+    display: none !important;
+  }
+
+  /* Ensure glossary links print as normal text */
+  .group {
+    border-bottom: none !important;
+    color: #111 !important;
+    font-weight: normal !important;
+  }
+
+  @page {
+    margin: 20mm 15mm;
+    size: A4 portrait;
   }
 }
 

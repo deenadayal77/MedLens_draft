@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
-  Check,
   FileSearch,
   Languages,
   RefreshCw,
@@ -20,6 +19,7 @@ import { EmergencyCard } from './components/results/EmergencyCard';
 import { SummaryQRCard } from './components/results/SummaryQRCard';
 import { useAppStore } from './store/appStore';
 import { useAnalysis } from './hooks/useAnalysis';
+import { URGENCY_STYLES } from './types';
 import type { AnalyzeResponse } from './types';
 
 const TranslationPanel = lazy(() =>
@@ -79,102 +79,44 @@ function HeroSection({ onAnalyze }: { onAnalyze: (file: File) => void }) {
   );
 }
 
-function ResultsHeader({ result, onReset }: { result: AnalyzeResponse; onReset: () => void }) {
-  const patient = result.patient_name && result.patient_name !== 'Not available' ? result.patient_name : 'Patient details unavailable';
+/** Full-width patient banner — appears at the top of the results dashboard */
+function PatientBanner({ result, onReset }: { result: AnalyzeResponse; onReset: () => void }) {
+  const hasPatient = result.patient_name && result.patient_name !== 'Not available';
+  const style = URGENCY_STYLES[result.urgency.level];
 
   return (
-    <div className="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-      <div>
-        <p className="mb-2 text-sm font-semibold text-accent">Analysis complete</p>
-        <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">Clinical report dashboard</h1>
-        <p className="mt-3 text-sm text-muted">{patient}</p>
-      </div>
-      <button
-        onClick={onReset}
-        className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rule bg-white px-4 py-2 text-sm font-semibold text-ink transition-all hover:border-accent hover:text-accent"
-      >
-        <RefreshCw className="h-4 w-4" />
-        New report
-      </button>
-    </div>
-  );
-}
-
-function compactText(value: string, fallback: string) {
-  const clean = value
-    .replace(/[#*_`>-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!clean) return fallback;
-  return clean.length > 96 ? `${clean.slice(0, 93)}...` : clean;
-}
-
-function EvidenceRail({ result }: { result: AnalyzeResponse }) {
-  const evidenceItems = [
-    {
-      label: 'Extracted report text',
-      value: compactText(result.summary, 'Text was extracted and prepared for summary generation.'),
-    },
-    {
-      label: 'Summary source',
-      value: compactText(result.summary, 'Summary is grounded in the uploaded report text.'),
-    },
-    {
-      label: 'Urgency rationale',
-      value: compactText(result.urgency.reason, 'Urgency rationale is available from the analysis result.'),
-    },
-  ];
-
-  return (
-    <div className="grid-panel p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="grid-panel mb-4 flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center print-patient-banner">
+      <div className="flex items-center gap-4">
+        <div
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl"
+          style={{ backgroundColor: `${style.color}18`, color: style.color }}
+        >
+          🩺
+        </div>
         <div>
-          <h2 className="text-lg font-semibold text-ink">PDF evidence map</h2>
-          <p className="mt-1 text-sm text-muted">Completed extraction signals used by summary, urgency, and chat.</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">Analysis complete</p>
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+            {hasPatient ? result.patient_name : 'Clinical Report Dashboard'}
+          </h1>
+          {hasPatient && (
+            <p className="mt-0.5 text-sm text-muted">Clinical report — MedLens analysis</p>
+          )}
         </div>
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[16px] border border-accent/20 bg-[#e7edff] text-accent">
-          <Check className="h-4 w-4" />
-        </span>
       </div>
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-[20px] border border-rule bg-neutral p-4">
-          <div className="rounded-[16px] border border-rule bg-white p-4">
-            <div className="mb-4 flex items-center justify-between border-b border-rule pb-3">
-              <p className="text-sm font-semibold text-ink">Uploaded PDF</p>
-              <span className="rounded-full border border-accent/20 bg-[#e7edff] px-2.5 py-1 text-xs font-semibold text-accent">
-                Parsed
-              </span>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="rounded-[14px] border border-rule bg-neutral p-3">
-                <p className="font-semibold text-ink">Patient</p>
-                <p className="mt-1 text-muted">
-                  {result.patient_name && result.patient_name !== 'Not available'
-                    ? result.patient_name
-                    : 'Not available in report'}
-                </p>
-              </div>
-              <div className="rounded-[14px] border border-accent/30 bg-[#e7edff] p-3">
-                <p className="font-semibold text-accent">Evidence ready</p>
-                <p className="mt-1 leading-5 text-muted">
-                  This panel confirms the report has been processed. Source snippets appear inside chat answers when available.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {evidenceItems.map((item, index) => (
-            <div key={item.label} className="rounded-[18px] border border-rule bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-ink">{item.label}</p>
-                <span className="text-xs font-semibold text-accent">0{index + 1}</span>
-              </div>
-              <p className="mt-2 text-sm leading-5 text-muted">{item.value}</p>
-            </div>
-          ))}
-        </div>
+      <div className="flex items-center gap-3">
+        <span
+          className="rounded-full px-4 py-1.5 text-sm font-bold tracking-wide"
+          style={{ backgroundColor: `${style.color}18`, color: style.color }}
+        >
+          {result.urgency.level.replace('_', ' ')}
+        </span>
+        <button
+          onClick={onReset}
+          className="print:hidden inline-flex items-center justify-center gap-2 rounded-2xl border border-rule bg-white px-4 py-2 text-sm font-semibold text-ink transition-all hover:border-accent hover:text-accent"
+        >
+          <RefreshCw className="h-4 w-4" />
+          New report
+        </button>
       </div>
     </div>
   );
@@ -186,6 +128,43 @@ function LazyPanelFallback() {
       <div className="flex items-center gap-3 text-sm font-semibold text-accent">
         <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
         Loading workspace
+      </div>
+    </div>
+  );
+}
+
+function compactText(value: string, fallback: string) {
+  const clean = value.replace(/[#*_`>-]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!clean) return fallback;
+  return clean.length > 96 ? `${clean.slice(0, 93)}...` : clean;
+}
+
+function EvidenceRail({ result }: { result: AnalyzeResponse }) {
+  const evidenceItems = [
+    { label: 'Extracted report text', value: compactText(result.summary, 'Text was extracted and prepared for summary generation.') },
+    { label: 'Summary source', value: compactText(result.summary, 'Summary is grounded in the uploaded report text.') },
+    { label: 'Urgency rationale', value: compactText(result.urgency.reason, 'Urgency rationale is available from the analysis result.') },
+  ];
+
+  return (
+    <div className="grid-panel p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">PDF evidence map</h2>
+          <p className="mt-1 text-sm text-muted">Signals extracted from the uploaded document.</p>
+        </div>
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-accent/20 bg-[#e7edff] text-accent text-sm font-bold">✓</span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {evidenceItems.map((item, index) => (
+          <div key={item.label} className="rounded-2xl border border-rule bg-white p-4">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-xs font-semibold text-ink">{item.label}</p>
+              <span className="text-xs font-bold text-accent">0{index + 1}</span>
+            </div>
+            <p className="text-xs leading-5 text-muted">{item.value}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -229,19 +208,14 @@ export default function App() {
           )}
 
           {phase === 'error' && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mx-auto max-w-2xl"
-            >
+            <motion.div key="error" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-2xl">
               <div className="grid-panel p-8">
                 <AlertCircle className="mb-4 h-10 w-10 text-red-600" />
                 <h2 className="text-2xl font-semibold text-ink">Analysis failed</h2>
                 <p className="mt-3 text-sm leading-6 text-muted">{error}</p>
                 <button
                   onClick={reset}
-                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-[18px] bg-accent px-5 py-2 text-sm font-semibold text-white transition-all hover:shadow-glow"
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-[18px] bg-accent px-5 py-2 text-sm font-semibold text-white transition-all hover:opacity-90"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Try again
@@ -251,50 +225,53 @@ export default function App() {
           )}
 
           {phase === 'results' && analysisResult && (
-            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <ResultsHeader result={analysisResult} onReset={reset} />
+            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-start print:block">
-                
-                {/* Column 1: Left */}
-                <div className="flex flex-col gap-4 lg:col-span-4 xl:col-span-3 print:hidden">
-                  <EvidenceRail result={analysisResult} />
-                  <Suspense fallback={<LazyPanelFallback />}>
-                    <TranslationPanel
-                      summary={analysisResult.summary}
-                      sessionId={analysisResult.session_id}
-                    />
-                  </Suspense>
-                </div>
-                
-                {/* Column 2: Center */}
-                <div className="flex flex-col gap-4 lg:col-span-8 xl:col-span-6 print:block">
-                  <SummaryCard
-                    summary={analysisResult.summary}
-                    patientName={analysisResult.patient_name}
-                  />
-                  <div className="print:hidden h-full">
-                    <Suspense fallback={<LazyPanelFallback />}>
-                      <ChatPanel />
-                    </Suspense>
-                  </div>
-                </div>
-                
-                {/* Column 3: Right */}
-                <div className="flex flex-col gap-4 lg:col-span-12 xl:col-span-3 print:hidden">
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                    <UrgencyCard urgency={analysisResult.urgency} />
-                    <ReasonCard reason={analysisResult.urgency.reason} />
-                  </div>
+              {/* ── ROW 0: Patient Banner (full width) ─────────────────── */}
+              <PatientBanner result={analysisResult} onReset={reset} />
+
+              {/* ── ROW 1: Summary (65%) + Sidebar (35%) ───────────────── */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
+
+                {/* Left: Summary Hero */}
+                <SummaryCard
+                  summary={analysisResult.summary}
+                  patientName={analysisResult.patient_name}
+                  urgency={analysisResult.urgency}
+                />
+
+                {/* Right: Compact sidebar cards */}
+                <div className="flex flex-col gap-4 print:hidden">
+                  <UrgencyCard urgency={analysisResult.urgency} />
+                  <ReasonCard reason={analysisResult.urgency.reason} />
                   <EmergencyCard sessionId={analysisResult.session_id} />
                   <SummaryQRCard result={analysisResult} />
                 </div>
-
-                {/* Disclaimer */}
-                <div className="lg:col-span-12 print:hidden">
-                  <Disclaimer />
-                </div>
               </div>
+
+              {/* ── ROW 2: Translation (50%) + Chat (50%) ──────────────── */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:hidden">
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <TranslationPanel
+                    summary={analysisResult.summary}
+                    sessionId={analysisResult.session_id}
+                  />
+                </Suspense>
+                <Suspense fallback={<LazyPanelFallback />}>
+                  <ChatPanel />
+                </Suspense>
+              </div>
+
+              {/* ── ROW 3: Evidence Map (full width) ───────────────────── */}
+              <div className="print:hidden">
+                <EvidenceRail result={analysisResult} />
+              </div>
+
+              {/* ── ROW 4: Disclaimer ──────────────────────────────────── */}
+              <div className="print:hidden">
+                <Disclaimer />
+              </div>
+
             </motion.div>
           )}
         </AnimatePresence>
