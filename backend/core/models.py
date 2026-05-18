@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ---------- Internal dataclasses (used by AI layer) ----------
@@ -22,6 +22,7 @@ class AnalysisResult:
     summary: str
     urgency: UrgencyAssessment
     report_hash: str
+    glossary_terms: list["GlossaryTerm"] = field(default_factory=list)
 
 
 @dataclass
@@ -40,12 +41,18 @@ class UrgencyResponse(BaseModel):
     override_keywords: list[str]
 
 
+class GlossaryTerm(BaseModel):
+    term: str
+    definition: str
+
+
 class AnalyzeResponse(BaseModel):
     session_id: str
     patient_name: str
     summary: str
     urgency: UrgencyResponse
     report_hash: str = ""
+    glossary_terms: list[GlossaryTerm] = Field(default_factory=list)
 
 
 class ChatRequest(BaseModel):

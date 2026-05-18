@@ -130,16 +130,34 @@ export function extractGlossaryTerms(text: string): GlossaryTerm[] {
   return Array.from(foundTerms.values()) as any as GlossaryTerm[];
 }
 
+function buildGlossaryMap(dynamicTerms: GlossaryTerm[] = []): Record<string, string> {
+  const dynamicGlossary = dynamicTerms.reduce<Record<string, string>>((acc, item) => {
+    const term = item.term?.trim().toLowerCase();
+    const definition = item.definition?.trim();
+    if (term && definition) {
+      acc[term] = definition;
+    }
+    return acc;
+  }, {});
+
+  return {
+    ...MEDICAL_GLOSSARY,
+    ...dynamicGlossary,
+  };
+}
+
 /**
  * Replaces matching medical terms in text with markdown glossary links.
  * Uses a segment-based approach to skip already-linked terms.
  * Example: "hydronephrosis" → "[hydronephrosis](glossary:Swelling...)"
  */
-export function applyGlossaryMarkdown(text: string): string {
+export function applyGlossaryMarkdown(text: string, dynamicTerms: GlossaryTerm[] = []): string {
   if (!text) return '';
 
+  const glossary = buildGlossaryMap(dynamicTerms);
+
   // Sort longest first so multi-word terms match before their sub-words
-  const sortedTerms = Object.keys(MEDICAL_GLOSSARY).sort((a, b) => b.length - a.length);
+  const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
 
   // Split by existing markdown links (capturing group keeps them in the array)
   // Odd-indexed parts are already-linked text → skip them
@@ -153,7 +171,7 @@ export function applyGlossaryMarkdown(text: string): string {
     }));
 
   for (const term of sortedTerms) {
-    const definition = MEDICAL_GLOSSARY[term];
+    const definition = glossary[term];
     const regex = new RegExp(`\\b(${escapeRegExp(term)})\\b`, 'gi');
 
     segments = segments.flatMap((segment) => {

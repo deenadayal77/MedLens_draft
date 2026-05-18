@@ -8,11 +8,17 @@ export interface UrgencyData {
   override_keywords: string[];
 }
 
+export interface GlossaryTerm {
+  term: string;
+  definition: string;
+}
+
 export interface AnalyzeResponse {
   session_id: string;
   patient_name: string;
   summary: string;
   urgency: UrgencyData;
+  glossary_terms?: GlossaryTerm[];
 }
 
 export interface ChatMessage {

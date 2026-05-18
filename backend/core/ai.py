@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import os
 from functools import lru_cache
@@ -20,12 +21,13 @@ from backend.core.config import (
     DEFAULT_GEMINI_EMBEDDING_MODEL,
     DEFAULT_GEMINI_MODEL,
     DEFAULT_GEMINI_OCR_MODEL,
+    GLOSSARY_PROMPT,
     QUESTION_REWRITE_PROMPT,
     SAFETY_OVERRIDE_KEYWORDS,
     SUMMARY_PROMPT,
     URGENCY_PROMPT,
 )
-from backend.core.models import ChatReply, UrgencyAssessment
+from backend.core.models import ChatReply, GlossaryTerm, UrgencyAssessment
 
 
 @lru_cache(maxsize=1)
@@ -155,6 +157,65 @@ def generate_summary_from_context(report_text: str) -> str:
     prompt = SUMMARY_PROMPT.format(context=report_text)
     summary = get_summary_llm().invoke(prompt)
     return _extract_text(summary)
+
+
+def _extract_json_array(raw_output: str) -> list:
+    cleaned = raw_output.strip()
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        match = re.search(r"\[[\s\S]*\]", cleaned)
+        if not match:
+            return []
+        try:
+            parsed = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return []
+
+    return parsed if isinstance(parsed, list) else []
+
+
+def generate_dynamic_glossary(summary: str) -> list[GlossaryTerm]:
+    if not summary.strip():
+        return []
+
+    prompt = GLOSSARY_PROMPT.format(summary=summary[:6000])
+    try:
+        raw_output = _extract_text(get_summary_llm().invoke(prompt))
+    except Exception:
+        return []
+
+    parsed_terms = _extract_json_array(raw_output)
+
+    summary_lower = summary.lower()
+    glossary_terms: list[GlossaryTerm] = []
+    seen_terms: set[str] = set()
+
+    for item in parsed_terms:
+        if not isinstance(item, dict):
+            continue
+
+        term = str(item.get("term", "")).strip()
+        definition = str(item.get("definition", "")).strip()
+        normalized = term.lower()
+
+        if not term or not definition or normalized in seen_terms:
+            continue
+        if normalized not in summary_lower:
+            continue
+        if len(definition) > 220:
+            definition = definition[:217].rstrip() + "..."
+
+        glossary_terms.append(GlossaryTerm(term=term, definition=definition))
+        seen_terms.add(normalized)
+
+        if len(glossary_terms) >= 20:
+            break
+
+    return glossary_terms
 
 
 def _extract_urgency_level(raw_output: str) -> str | None:

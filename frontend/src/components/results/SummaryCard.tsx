@@ -5,18 +5,22 @@ import { GlassCard } from '../ui/GlassCard';
 import { GlossaryTooltip } from '../ui/GlossaryTooltip';
 import { applyGlossaryMarkdown } from '../../utils/glossary';
 import { URGENCY_STYLES } from '../../types';
-import type { UrgencyData } from '../../types';
+import type { GlossaryTerm, UrgencyData } from '../../types';
 
 interface SummaryCardProps {
   summary: string;
   patientName: string;
   urgency?: UrgencyData;
+  glossaryTerms?: GlossaryTerm[];
   className?: string;
 }
 
-export function SummaryCard({ summary, patientName, urgency, className }: SummaryCardProps) {
+export function SummaryCard({ summary, patientName, urgency, glossaryTerms = [], className }: SummaryCardProps) {
   const hasPatient = patientName && patientName !== 'Not available';
-  const processedSummary = useMemo(() => applyGlossaryMarkdown(summary), [summary]);
+  const processedSummary = useMemo(
+    () => applyGlossaryMarkdown(summary, glossaryTerms),
+    [summary, glossaryTerms],
+  );
   const urgencyStyle = urgency ? URGENCY_STYLES[urgency.level] : null;
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 

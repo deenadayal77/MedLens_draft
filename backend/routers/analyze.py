@@ -6,10 +6,11 @@ from pydantic import BaseModel
 from backend.core.ai import (
     classify_urgency,
     extract_text_from_report_images,
+    generate_dynamic_glossary,
     generate_summary_from_context,
 )
 from backend.core.errors import ai_service_exception
-from backend.core.models import AnalyzeResponse, UrgencyResponse
+from backend.core.models import AnalyzeResponse, GlossaryTerm, UrgencyResponse
 from backend.core.report_processing import (
     derive_primary_context,
     extract_patient_name,
@@ -35,6 +36,7 @@ def _build_analyze_response(
     summary: str,
     urgency,
     report_hash: str,
+    glossary_terms: list[GlossaryTerm] | None = None,
 ) -> AnalyzeResponse:
     from backend.core.models import AnalysisResult as _AR
 
@@ -45,6 +47,7 @@ def _build_analyze_response(
         summary=summary,
         urgency=urgency,
         report_hash=report_hash,
+        glossary_terms=glossary_terms or [],
     )
 
     session_id = create_session(result)
@@ -62,6 +65,7 @@ def _build_analyze_response(
             override_keywords=urgency.override_keywords,
         ),
         report_hash=report_hash,
+        glossary_terms=glossary_terms or [],
     )
 
 
@@ -87,6 +91,7 @@ async def analyze_report(file: UploadFile = File(...)):
         patient_name = extract_patient_name(report_text)
         primary_context = derive_primary_context(report_text)
         summary = generate_summary_from_context(primary_context)
+        glossary_terms = generate_dynamic_glossary(summary)
         urgency = classify_urgency(summary=summary, full_report_text=report_text)
     except Exception as exc:
         raise ai_service_exception(exc, "Analysis") from exc
@@ -98,6 +103,7 @@ async def analyze_report(file: UploadFile = File(...)):
         summary=summary,
         urgency=urgency,
         report_hash=report_hash,
+        glossary_terms=glossary_terms,
     )
 
 
@@ -116,6 +122,7 @@ async def analyze_report_text(request: AnalyzeTextRequest):
         patient_name = extract_patient_name(report_text)
         primary_context = derive_primary_context(report_text)
         summary = generate_summary_from_context(primary_context)
+        glossary_terms = generate_dynamic_glossary(summary)
         urgency = classify_urgency(summary=summary, full_report_text=report_text)
     except Exception as exc:
         raise ai_service_exception(exc, "Analysis") from exc
@@ -127,4 +134,5 @@ async def analyze_report_text(request: AnalyzeTextRequest):
         summary=summary,
         urgency=urgency,
         report_hash=report_hash,
+        glossary_terms=glossary_terms,
     )

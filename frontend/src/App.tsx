@@ -241,6 +241,7 @@ export default function App() {
                     summary={analysisResult.summary}
                     patientName={analysisResult.patient_name}
                     urgency={analysisResult.urgency}
+                    glossaryTerms={analysisResult.glossary_terms ?? []}
                   />
                 </motion.div>
 
